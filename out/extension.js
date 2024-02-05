@@ -12,37 +12,34 @@ async function activate(context) {
     let urlDocker = await vscode.workspace.findFiles('**/app/Dockerfile');
     let urlPipes = await vscode.workspace.findFiles('**/.iupipes.yml');
     let listUrls = [];
-    let environmentList = [];
-    let template;
     listUrls.push(urlTf, urlCf1, urlCf2, urlDocker, urlPipes);
-    const iupipesFile = urlPipes.find(url => url.fsPath.includes('.iupipes.yml'));
-    if (iupipesFile) {
-        environmentList = getEnvironmentAccount(iupipesFile.fsPath);
-        template = findTemplate(iupipesFile.fsPath);
-    }
-    else {
-        environmentList = [];
-    }
-    if (template) {
-        for (let urllist of listUrls) {
-            for (let urlDetails of urllist) {
-                updateDiagnostics(urlDetails, collection, environmentList);
-            }
+    for (let urllist of listUrls) {
+        for (let urlDetails of urllist) {
+            updateDiagnostics(urlDetails, collection, urlPipes);
         }
-        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
-            if (editor) {
-                updateDiagnostics(editor.uri, collection, environmentList);
-            }
-        }));
-        context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-            if (editor) {
-                updateDiagnostics(editor.document.uri, collection, environmentList);
-            }
-        }));
     }
+    context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
+        if (editor) {
+            updateDiagnostics(editor.uri, collection, urlPipes);
+        }
+    }));
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        if (editor) {
+            updateDiagnostics(editor.document.uri, collection, urlPipes);
+        }
+    }));
 }
 exports.activate = activate;
-function updateDiagnostics(document, collection, environmentList) {
+function updateDiagnostics(document, collection, iupipesFile) {
+    const lines = document.fsPath.split('\infra');
+    let environmentList = [];
+    let template = null;
+    for (let iupipes of iupipesFile) {
+        template = findTemplate(iupipes.fsPath);
+        if (iupipes.fsPath.includes(lines[0]) && template) {
+            environmentList = getEnvironmentAccount(iupipes.fsPath);
+        }
+    }
     let pathFound = path.basename(document.fsPath).toLowerCase();
     let pathsToSearchEnvironments = ['terraform.tfvars', 'parameters-prod.json', 'parameters.json'];
     let pathsToSearchConfigs = ['dockerfile', '.iupipes.yml'];
@@ -93,22 +90,22 @@ function updateDiagnostics(document, collection, environmentList) {
                 });
             }
             //MAX
-            if ((position.name.includes('max')) && parseInt(position.line.replace('"', '')) > 50) {
+            if ((position.name.includes('max')) && parseInt(position.line.replace('"', '')) > 70) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
-                    message: position.parametro + ' superior a 50.',
+                    message: position.parametro + ' superior a 70.',
                     range: range,
                     severity: vscode.DiagnosticSeverity.Warning,
                     source: '',
                 });
             }
             //GRACE
-            if (position.name.includes('grace') && parseInt(position.line.replace('"', '')) >= 500) {
+            if (position.name.includes('grace') && parseInt(position.line.replace('"', '')) >= 200) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
-                    message: position.parametro + ' superior a 500s, favor verificar.',
+                    message: position.parametro + ' superior a 200s, favor verificar.',
                     range: range,
                     severity: vscode.DiagnosticSeverity.Error,
                     source: '',
@@ -221,7 +218,7 @@ function updateDiagnostics(document, collection, environmentList) {
                     textToFind = [env.account];
                     positions = findText(textToFind, directoryPath);
                     for (let position of positions) {
-                        if (position.line.replace('"', '').replace('"', '').includes(env.account)) {
+                        if (position.line.replace('"', '').replace('"', '') === (env.account)) {
                             const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                             diagnostics.push({
                                 code: '',
