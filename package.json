@@ -1,8 +1,8 @@
 {
 	"name": "techenablers-bestpratices",
-	"displayName": "Best Pratices Tech Enablers",
-	"description": "Best Pratices Tech Enablers",
-	"version": "0.1.1",
+	"displayName": "TechEnablers@Itau",
+	"description": "TechEnablers@Itau",
+	"version": "0.1.0",
 	"publisher": "techenablers-itau",
 	"private": true,
 	"license": "MIT",
