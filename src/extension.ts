@@ -14,6 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let urlPipes  = await vscode.workspace.findFiles('**/.iupipes.yml');
 	let listUrls  = []
 	let environmentList: any = [];
+	let template;
 
 	listUrls.push(urlTf, urlCf1, urlCf2, urlDocker, urlPipes) ;
 
@@ -21,28 +22,31 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	if (iupipesFile) {
 		environmentList = getEnvironmentAccount(iupipesFile.fsPath);
+		template        = findTemplate(iupipesFile.fsPath);
 	} else {
 		environmentList = [];
 	}
 
-	for (let urllist of listUrls) {
-		for (let urlDetails of urllist)
-		{
-			updateDiagnostics(urlDetails, collection, environmentList);
-		}	
+	if (template) {
+		for (let urllist of listUrls) {
+			for (let urlDetails of urllist)
+			{
+				updateDiagnostics(urlDetails, collection, environmentList);
+			}	
+		}
+
+		context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
+			if (editor) {
+				updateDiagnostics(editor.uri, collection, environmentList);
+			}
+		}));
+
+		context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+			if (editor) {
+				updateDiagnostics(editor.document.uri, collection, environmentList);
+			}
+		}));
 	}
-
-	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
-		if (editor) {
-			updateDiagnostics(editor.uri, collection, environmentList);
-		}
-	}));
-
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-		if (editor) {
-			updateDiagnostics(editor.document.uri, collection, environmentList);
-		}
-	}));
 }
 
 function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCollection, environmentList: any): void {
@@ -63,7 +67,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.name === 'hom' || position.name === 'dev') {
+			if (position.line.includes('hom') || position.line.includes('dev')) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
@@ -143,20 +147,24 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		}
 
 		//ESPAÇOS EM BRANCO 
-	    textToFind = ['subnet','vpc'];
+	    textToFind = ['subnet'];
 	    positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.name.includes('subnet') || position.name.includes('vpc')) {
-				if (position.line.includes(' ')){
-					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-					diagnostics.push({
-						code: '',
-						message: position.parametro + ' com espaçamentos.',
-						range: range,
-						severity: vscode.DiagnosticSeverity.Error,
-						source: '',
-					});
+			if (position.name.includes('subnet')) {
+				let lines = position.line.split(',');
+				for (let line of lines){
+					line = line.replace('[','').replace(']','').trim();
+					if (line.includes(' ')){
+						const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+						diagnostics.push({
+							code: '',
+							message: position.parametro + ' com espaçamentos.',
+							range: range,
+							severity: vscode.DiagnosticSeverity.Error,
+							source: '',
+						});
+					}
 				}
 			}
 		}
@@ -168,8 +176,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			if (position.name.includes('subnet')) {
 				if (position.line.includes('subnet') && position.line.includes('[')){
 					const lines = position.line.split(',');
-					if (lines.length < 3)
-				    {
+					if (lines.length < 3) {
 						const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 						diagnostics.push({
 							code: '',
@@ -185,16 +192,37 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			}
 		}
 
-		if (listSubnets.length < 3 && positions.length) {
-			const range = new vscode.Range(positions[0].position, positions[0].position.translate(0, positions[0].filePath.length));
-			diagnostics.push({
-				code: '',
-				message: 'Configuracão com menos de 3 subnets.',
-				range: range,
-				severity: vscode.DiagnosticSeverity.Warning,
-				source: '',
-			});
+		if (listSubnets.length < 3 && listSubnets.length != 0) {
+			for (let subnet of listSubnets) {
+				if (subnet.includes('subnet')){
+					const range = new vscode.Range(positions[0].position, positions[0].position.translate(0, positions[0].filePath.length));
+					diagnostics.push({
+						code: '',
+						message: 'Configuracão com menos de 3 subnets.',
+						range: range,
+						severity: vscode.DiagnosticSeverity.Warning,
+						source: '',
+					});
+				}
+			}
 		}
+
+		textToFind = ['vpc'];
+	    positions  = findText(textToFind, directoryPath);
+
+		for (let position of positions) {
+			if (position.name.includes('vpc') && position.line.includes(' ')) {
+				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+				diagnostics.push({
+					code: '',
+					message: position.parametro + ' com espaçamentos.',
+					range: range,
+					severity: vscode.DiagnosticSeverity.Error,
+					source: '',
+				});
+			}
+		}
+		
 
 		//KEY EXPOSTAS
 	    textToFind = ['token','accesskey','password'];
@@ -224,7 +252,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 	    			positions  = findText(textToFind, directoryPath);
 					
 					for (let position of positions) {
-						if (position.line.replace('"','').replace('"','') === env.account) {
+						if (position.line.replace('"','').replace('"','').includes(env.account)) {
 							const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 							diagnostics.push({
 								code: '',
@@ -368,20 +396,47 @@ function findTextDocker(text: string[], filePath: string) {
 		const lines = fileContent.split('\n');
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			for (let j = 0; j < text.length; j++) {
-				const name = text[j].toLowerCase();
-				const lineLower = line.toLowerCase(); 
-				const column = lineLower.indexOf(name);
-				if (column !== -1) {
-					const position = new vscode.Position(i, column); 
-					const parametro = line.substring(0, line.indexOf('[')).replace('"','').trim().replace('"','');
-					const valor = line.substring(line.indexOf('[') + 1).trim();
-					results.push({filePath, position, line: valor.toLowerCase(), name, parametro});
+			if (!line.trim().startsWith('#'))
+			{
+				for (let j = 0; j < text.length; j++) {
+					const name = text[j].toLowerCase();
+					const lineLower = line.toLowerCase(); 
+					const column = lineLower.indexOf(name);
+					if (column !== -1) {
+						const position = new vscode.Position(i, column); 
+						const parametro = line.substring(0, line.indexOf('[')).replace('"','').trim().replace('"','');
+						const valor = line.substring(line.indexOf('[') + 1).trim();
+						results.push({filePath, position, line: valor.toLowerCase(), name, parametro});
+					}
 				}
 			}
 		}
 	}
 	searchInFile(filePath);
 	return results;
+}
+
+function findTemplate(filePath: string) {
+
+	const fileContent = fs.readFileSync(filePath, 'utf-8');
+	const lines = fileContent.split('\n');
+	let templates = ['ecs','cloudformation'];
+	let count = 0;
+
+	for (let i=0; i < lines.length; i++) {
+		const line = lines[i].trim();
+
+		for (let template of templates) {
+			if (line.startsWith(template + ':')) {
+				count = count + 1;
+			} 
+		}
+	}
+
+	if (count > 0) {
+		return true;
+	} else {
+		return false;
+	}
 }
 	
