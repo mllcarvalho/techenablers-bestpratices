@@ -97,7 +97,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			}
 
 			//DESIRED E MIN
-			if ((position.parametro.includes('desired') || position.parametro.includes('min') || position.parametro.includes('minimum')) && (position.parametro.includes('task') || position.parametro.includes('capacity')) && parseInt(position.line.replace('"','')) < 3) {
+			if ((position.parametro.includes('desired') || position.parametro.includes('min') || position.parametro.includes('minimum')) && (position.parametro.includes('task') || position.parametro.includes('capacity') || position.parametro.includes('count')) && parseInt(position.line.replace('"','')) < 3) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
@@ -109,7 +109,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			}
 
 			//MAX
-			if ((position.parametro.includes('max') || position.parametro.includes('maximum')) && (position.parametro.includes('task') || position.parametro.includes('capacity')) && parseInt(position.line.replace('"','')) > 70) {
+			if ((position.parametro.includes('max') || position.parametro.includes('maximum')) && (position.parametro.includes('task') || position.parametro.includes('capacity') || position.parametro.includes('count')) && parseInt(position.line.replace('"','')) > 70) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
