@@ -68,7 +68,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         positions = findText(textToFind, directoryPath);
         for (let position of positions) {
             //RETENTION
-            if (position.name === 'retention' && parseInt(position.line.replace(':', '')) < 10) {
+            if (position.parametro === 'retention' && parseInt(position.line.replace(':', '')) < 10) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -79,7 +79,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                 });
             }
             //DESIRED E MIN
-            if ((position.name === 'desired' || position.name.includes('min')) && parseInt(position.line.replace('"', '')) < 3) {
+            if ((position.parametro === 'desired' || position.parametro.includes('min')) && parseInt(position.line.replace('"', '')) < 3) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -90,7 +90,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                 });
             }
             //MAX
-            if ((position.name.includes('max')) && parseInt(position.line.replace('"', '')) > 70) {
+            if ((position.parametro.includes('max')) && parseInt(position.line.replace('"', '')) > 70) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -101,7 +101,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                 });
             }
             //GRACE
-            if (position.name.includes('grace') && parseInt(position.line.replace('"', '')) >= 200) {
+            if (position.parametro.includes('grace') && parseInt(position.line.replace('"', '')) >= 200) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -112,7 +112,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                 });
             }
             //COOLDOWN
-            if (position.name.includes('cooldown') && (parseInt(position.line.replace('"', '')) >= 700 || parseInt(position.line.replace('"', '')) <= 200)) {
+            if (position.parametro.includes('cooldown') && (parseInt(position.line.replace('"', '')) >= 700 || parseInt(position.line.replace('"', '')) <= 200)) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -127,7 +127,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         textToFind = ['subnet'];
         positions = findText(textToFind, directoryPath);
         for (let position of positions) {
-            if (position.name.includes('subnet')) {
+            if (position.parametro.includes('subnet')) {
                 let lines = position.line.split(',');
                 for (let line of lines) {
                     line = line.replace('[', '').replace(']', '').trim();
@@ -147,7 +147,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         //MINIMO 3 AZS
         let listSubnets = [];
         for (let position of positions) {
-            if (position.name.includes('subnet')) {
+            if (position.parametro.includes('subnet')) {
                 if (position.line.includes('subnet') && position.line.includes('[')) {
                     const lines = position.line.split(',');
                     if (lines.length < 3) {
@@ -183,7 +183,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         textToFind = ['vpc'];
         positions = findText(textToFind, directoryPath);
         for (let position of positions) {
-            if (position.name.includes('vpc') && position.line.includes(' ')) {
+            if (position.parametro.includes('vpc') && position.line.includes(' ')) {
                 const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                 diagnostics.push({
                     code: '',
@@ -198,7 +198,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         textToFind = ['token', 'accesskey', 'password'];
         positions = findText(textToFind, directoryPath);
         for (let position of positions) {
-            if (position.name.includes('token') || position.name.includes('accesskey') || position.name.includes('password')) {
+            if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password')) {
                 if (!position.line.includes('secret')) {
                     const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                     diagnostics.push({
@@ -241,7 +241,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         textToFind = ['ENTRYPOINT'];
         positions = findTextDocker(textToFind, directoryPath);
         for (let position of positions) {
-            if (position.name.toUpperCase().includes('ENTRYPOINT') && !position.line.trim().startsWith('#')) {
+            if (position.parametro.toUpperCase().includes('ENTRYPOINT') && !position.line.trim().startsWith('#')) {
                 if (!position.line.includes('java_opts') && (!position.line.includes('xmx') || !position.line.includes('xms')) && !position.line.includes('maxram')) {
                     const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                     diagnostics.push({
@@ -258,7 +258,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         textToFind = ['email'];
         positions = findText(textToFind, directoryPath);
         for (let position of positions) {
-            if (position.name.toLowerCase().includes('email')) {
+            if (position.parametro.toLowerCase().includes('email')) {
                 if (position.line.includes('email') || position.line.replace('"', '').replace('"', '') === '') {
                     const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
                     diagnostics.push({
