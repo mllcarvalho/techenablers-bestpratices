@@ -79,13 +79,13 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		}
 
 		//PARAMETRIZACAO
-		textToFind = ['retention','desired','min_capacity','mincapacity','min_task','mintask','nax_task','maxtask','grace','cooldown'];
+		textToFind = ['retention','desired','min','max','grace','cooldown'];
 	    positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
 
 			//RETENTION
-			if (position.parametro === 'retention' && parseInt(position.line.replace(':','')) < 10) {
+			if (position.parametro.includes('retention') && parseInt(position.line.replace(':','')) < 10) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
@@ -97,7 +97,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			}
 
 			//DESIRED E MIN
-			if ((position.parametro === 'desired' || position.parametro.includes('min')) && parseInt(position.line.replace('"','')) < 3) {
+			if ((position.parametro.includes('desired') || position.parametro.includes('min') || position.parametro.includes('minimum')) && (position.parametro.includes('task') || position.parametro.includes('capacity')) && parseInt(position.line.replace('"','')) < 3) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
@@ -109,7 +109,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 			}
 
 			//MAX
-			if ((position.parametro.includes('max')) && parseInt(position.line.replace('"','')) > 70) {
+			if ((position.parametro.includes('max') || position.parametro.includes('maximum')) && (position.parametro.includes('task') || position.parametro.includes('capacity')) && parseInt(position.line.replace('"','')) > 70) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
