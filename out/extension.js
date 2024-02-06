@@ -316,7 +316,7 @@ function findText(text, filePath) {
                 if (column !== -1) {
                     const position = new vscode.Position(i, column);
                     if (filePath.includes('.tfvars')) {
-                        const parametro = line.substring(0, line.indexOf('=')).replace('"', '').trim().replace('"', '');
+                        const parametro = line.substring(0, line.indexOf('=')).replace('"', '').trim().replace('"', '').toLowerCase();
                         let valor = line.substring(line.indexOf('=') + 1).trim();
                         if (parametro.trim().startsWith('#') || parametro.trim().startsWith('//')) {
                             break;
@@ -329,7 +329,7 @@ function findText(text, filePath) {
                         }
                     }
                     else {
-                        const parametro = line.substring(0, line.indexOf(':')).replace('"', '').trim().replace('"', '');
+                        const parametro = line.substring(0, line.indexOf(':')).replace('"', '').trim().replace('"', '').toLowerCase();
                         const valor = line.substring(line.indexOf(':') + 1).trim().replace(',', '');
                         results.push({ filePath, position, line: valor.toLowerCase(), name, parametro });
                     }
