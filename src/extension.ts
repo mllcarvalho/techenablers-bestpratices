@@ -243,15 +243,14 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		}
 
 		//ENVIRONMENT DEV E HOM
-		if (environmentList.length > 0)
-		{
+		if (environmentList.length > 0) {
 			environmentList.forEach((env: { environment: string; account: string; }) => {
 				if (env.environment != 'prod') {
 					textToFind = [env.account];
 	    			positions  = findText(textToFind, directoryPath);
 					
 					for (let position of positions) {
-						if (position.line.replace('"','').replace('"','') === (env.account)) {
+						if (position.line.replace('"','').replace('"','').includes(env.account)) {
 							const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 							diagnostics.push({
 								code: '',
