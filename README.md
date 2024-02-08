@@ -3,6 +3,7 @@
 Geração de diagnósticos seguindo as recomendações do Tech Enablers.
 
 Essa extensão contempla as seguintes verificações nos templates de ECS.
+Para seu melhor aproveitamento, mantenha os dados parametrizáveis nos arquivos de parametrização (.tfvars, parameters.json)
 
 - Variáveis apontando para recursos de dev ou hom;
 - Espaços em branco nas variáveis de subnets e vpc;
@@ -14,7 +15,10 @@ Essa extensão contempla as seguintes verificações nos templates de ECS.
 - Retention Logs;
 - Desired, Min Tasks e Max Tasks;
 - Grace Period;
-- Cooldown.
+- Cooldown;
+- Healthcheck start period | interval | threshold
+- Memória e CPU
+- SPOT em produção
 
 Arquivos validados:
 

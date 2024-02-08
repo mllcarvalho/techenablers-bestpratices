@@ -107,7 +107,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                     code: '',
                     message: position.parametro + ' superior a 200s, favor verificar.',
                     range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
+                    severity: vscode.DiagnosticSeverity.Warning,
                     source: '',
                 });
             }
@@ -118,7 +118,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                     code: '',
                     message: position.parametro + ' com valores não recomendados, favor verificar.',
                     range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
+                    severity: vscode.DiagnosticSeverity.Warning,
                     source: '',
                 });
             }
@@ -231,6 +231,81 @@ function updateDiagnostics(document, collection, iupipesFile) {
                     }
                 }
             });
+        }
+        //MEMORIA E CPU
+        textToFind = ['memory', 'cpu'];
+        positions = findText(textToFind, directoryPath);
+        for (let position of positions) {
+            if ((position.parametro.includes('memory') || position.parametro.includes('cpu')) && !position.parametro.includes('reservation')) {
+                if (parseInt(position.line.replace('"', '').replace('"', '')) < 512) {
+                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+                    diagnostics.push({
+                        code: '',
+                        message: position.parametro + ' inferior a 512, favor verificar.',
+                        range: range,
+                        severity: vscode.DiagnosticSeverity.Warning,
+                        source: '',
+                    });
+                }
+            }
+        }
+        //CAPACITY PROVIDER
+        textToFind = ['provider'];
+        positions = findText(textToFind, directoryPath);
+        for (let position of positions) {
+            if (position.parametro.includes('capacity')) {
+                if (position.line.includes('spot')) {
+                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+                    diagnostics.push({
+                        code: '',
+                        message: position.parametro + ' utilizando SPOT em prod.',
+                        range: range,
+                        severity: vscode.DiagnosticSeverity.Warning,
+                        source: '',
+                    });
+                }
+            }
+        }
+        //HEALTHCHECK
+        textToFind = ['health'];
+        positions = findText(textToFind, directoryPath);
+        for (let position of positions) {
+            if (position.parametro.includes('check') && position.parametro.includes('start')) {
+                if (parseInt(position.line.replace('"', '').replace('"', '')) >= 50) {
+                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+                    diagnostics.push({
+                        code: '',
+                        message: position.parametro + ' acima do recomendado, favor verificar.',
+                        range: range,
+                        severity: vscode.DiagnosticSeverity.Warning,
+                        source: '',
+                    });
+                }
+            }
+            else if (position.parametro.includes('check') && position.parametro.includes('interval')) {
+                if (parseInt(position.line.replace('"', '').replace('"', '')) >= 30) {
+                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+                    diagnostics.push({
+                        code: '',
+                        message: position.parametro + ' acima do recomendado, favor verificar.',
+                        range: range,
+                        severity: vscode.DiagnosticSeverity.Warning,
+                        source: '',
+                    });
+                }
+            }
+            else if (position.parametro.includes('check') && position.parametro.includes('threshold')) {
+                if (parseInt(position.line.replace('"', '').replace('"', '')) >= 7 || parseInt(position.line.replace('"', '').replace('"', '')) <= 1) {
+                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+                    diagnostics.push({
+                        code: '',
+                        message: position.parametro + ' não recomendado, favor verificar.',
+                        range: range,
+                        severity: vscode.DiagnosticSeverity.Warning,
+                        source: '',
+                    });
+                }
+            }
         }
     }
     else if (document && pathsToSearchConfigs.includes(pathFound.toLowerCase())) {
