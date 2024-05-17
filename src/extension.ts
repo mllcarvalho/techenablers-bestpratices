@@ -12,7 +12,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let urlCf2 	  = await vscode.workspace.findFiles('**/infra/parameters-prod.json');
 	let urlDocker = await vscode.workspace.findFiles('**/app/Dockerfile');
 	let urlPipes  = await vscode.workspace.findFiles('**/.iupipes.yml');
-	let listUrls  = []
+	let listUrls  = [];
 
 	listUrls.push(urlTf, urlCf1, urlCf2, urlDocker, urlPipes) ;
 
