@@ -261,7 +261,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		positionNextLine.forEach(position => {
 			const { currentLine, nextLine, position: pos, parametro } = position;
 	
-			if (parametro.includes('name')) {
+			if (parametro.includes('name') && parametro.length < 5 && parametro.startsWith('name') ) {
 				if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
 					const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
 					diagnostics.push({
@@ -561,7 +561,7 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 		positionNextLine.forEach(position => {
 			const { currentLine, nextLine, position: pos, parametro } = position;
 	
-			if (parametro.includes('name')) {
+			if (parametro.includes('name') && parametro.length < 5 && parametro.startsWith('name')) {
 				if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
 					const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
 					diagnostics.push({
@@ -577,7 +577,7 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 
 		for (let position of positions) {
 			if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password') || position.parametro.includes('access_key')) {
-				if (!position.line.includes('secret')){
+				if (!position.line.includes('secret') ){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
@@ -678,7 +678,7 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 
 		if (positions.length != 0) {
 			//ENVIRONMENT DEV E HOM
-			textToFind = ['spot'];
+			textToFind = ['spot', 'database'];
 			positions  = findText(textToFind, directoryPath);
 
 			if (positions.length == 0) {

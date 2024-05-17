@@ -226,7 +226,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
         positions = findText(textToFind, directoryPath);
         positionNextLine.forEach(position => {
             const { currentLine, nextLine, position: pos, parametro } = position;
-            if (parametro.includes('name')) {
+            if (parametro.includes('name') && parametro.length < 5 && parametro.startsWith('name')) {
                 if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
                     const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
                     diagnostics.push({
@@ -496,7 +496,7 @@ function updateDiagnosticsDevHom(document, collection) {
         positions = findText(textToFind, directoryPath);
         positionNextLine.forEach(position => {
             const { currentLine, nextLine, position: pos, parametro } = position;
-            if (parametro.includes('name')) {
+            if (parametro.includes('name') && parametro.length < 5 && parametro.startsWith('name')) {
                 if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
                     const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
                     diagnostics.push({
@@ -603,7 +603,7 @@ function updateDiagnosticsDevHom(document, collection) {
         }
         if (positions.length != 0) {
             //ENVIRONMENT DEV E HOM
-            textToFind = ['spot'];
+            textToFind = ['spot', 'database'];
             positions = findText(textToFind, directoryPath);
             if (positions.length == 0) {
                 diagnostics.push({
