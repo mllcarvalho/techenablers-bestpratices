@@ -7,6 +7,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const collection = vscode.languages.createDiagnosticCollection('techenablers-bestpratices'); 
 
+	const prodRegex = /\bprod\b/;
+    const devHomRegex = /\b(dev|hom)\b/;
+
 	//PROD
 	let urlTf     = await vscode.workspace.findFiles('**/infra/terraform/inventories/prod/**'); 
 	let urlCf1    = await vscode.workspace.findFiles('**/infra/prod/**');
@@ -46,9 +49,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
 		if (editor) {
-			if(editor.uri.fsPath.includes('prod')) {
+			if(prodRegex.test(editor.uri.fsPath)) {
 				updateDiagnostics(editor.uri, collection, urlPipes);
-			} else if (editor.uri.fsPath.includes('dev') || editor.uri.fsPath.includes('hom')) {
+			} else if (devHomRegex.test(editor.uri.fsPath)) {
 				updateDiagnosticsDevHom(editor.uri, collection);
 			}
 				
@@ -57,9 +60,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
 		if (editor) {
-			if(editor.document.uri.fsPath.includes('prod')) {
+			if(prodRegex.test(editor.document.uri.fsPath)) {
 				updateDiagnostics(editor.document.uri, collection, urlPipes);
-			} else if (editor.document.uri.fsPath.includes('dev') || editor.document.uri.fsPath.includes('hom')) {
+			} else if (devHomRegex.test(editor.document.uri.fsPath)) {
 				updateDiagnosticsDevHom(editor.document.uri, collection);
 			}
 		}
@@ -87,7 +90,10 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 	let textToFind = [];
 	const diagnostics = [];
 
-	if (document && pathsToSearchEnvironments.includes(pathFound) && document.fsPath.toLowerCase().includes('prod')) {
+	const prodRegex = /\bprod\b/;
+    const devHomRegex = /\b(dev|hom)\b/;
+
+	if (document && pathsToSearchEnvironments.includes(pathFound) && prodRegex.test(document.fsPath.toLowerCase())) {
 		
 		let directoryPath = document.fsPath;
 		
@@ -96,7 +102,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.line.includes('hom') || position.line.includes('dev')) {
+			if (devHomRegex.test(position.line)) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
@@ -450,7 +456,10 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 	let textToFind = [];
 	const diagnostics = [];
 
-	if (document && pathsToSearchEnvironments.includes(pathFound) && (document.fsPath.toLowerCase().includes('dev') || document.fsPath.toLowerCase().includes('hom'))) {
+	const prodRegex = /\bprod\b/;
+    const devHomRegex = /\b(dev|hom)\b/;
+
+	if (document && pathsToSearchEnvironments.includes(pathFound) && devHomRegex.test(document.fsPath.toLowerCase())) {
 		
 		let directoryPath = document.fsPath;
 		
@@ -459,7 +468,7 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 		positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.line.includes('prod')) {
+			if (prodRegex.test(position.line)) {
 				const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 				diagnostics.push({
 					code: '',
