@@ -254,16 +254,34 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 		
 
 		//KEY EXPOSTAS
-	    textToFind = ['token','accesskey','password'];
-	    positions  = findText(textToFind, directoryPath);
+	    textToFind = ['token', 'accesskey', 'password', 'access_key'];
+   		const positionNextLine = findTextWithNextLine(textToFind, directoryPath);
+		positions = findText(textToFind, directoryPath);
+
+		positionNextLine.forEach(position => {
+			const { currentLine, nextLine, position: pos, parametro } = position;
+	
+			if (parametro.includes('name')) {
+				if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
+					const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
+					diagnostics.push({
+						code: '',
+						message: position.parametro + ' = ' + position.currentLine + ' com chave exposta.',
+						range: range,
+						severity: vscode.DiagnosticSeverity.Warning,
+						source: '',
+					});
+				}
+			}
+		});
 
 		for (let position of positions) {
-			if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password')) {
+			if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password') || position.parametro.includes('access_key')) {
 				if (!position.line.includes('secret')){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
-						message: position.parametro + ' com chave exposta.',
+						message: position.parametro + ' = ' + position.line + ' com chave exposta.',
 						range: range,
 						severity: vscode.DiagnosticSeverity.Warning,
 						source: '',
@@ -300,7 +318,7 @@ function updateDiagnostics(document: vscode.Uri, collection: vscode.DiagnosticCo
 	    positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if ((position.parametro.includes('memory') || position.parametro.includes('cpu')) && !position.parametro.includes('reservation') ) {
+			if ((position.parametro.includes('memory') || position.parametro.includes('cpu')) && !position.parametro.includes('reservation') && !position.parametro.includes('threshold')) {
 				if (parseInt(position.line.replace('"','').replace('"','')) < 512){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
@@ -536,16 +554,34 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 		}
 		
 		//KEY EXPOSTAS
-	    textToFind = ['token','accesskey','password'];
-	    positions  = findText(textToFind, directoryPath);
+	    textToFind = ['token', 'accesskey', 'password', 'access_key'];
+   		const positionNextLine = findTextWithNextLine(textToFind, directoryPath);
+		positions = findText(textToFind, directoryPath);
+
+		positionNextLine.forEach(position => {
+			const { currentLine, nextLine, position: pos, parametro } = position;
+	
+			if (parametro.includes('name')) {
+				if (currentLine.includes('token') || currentLine.includes('accesskey') || currentLine.includes('password') || currentLine.includes('access_key') && (!nextLine.includes('secret') && nextLine.includes('value'))) {
+					const range = new vscode.Range(pos, pos.translate(0, currentLine.length));
+					diagnostics.push({
+						code: '',
+						message: position.parametro + ' = ' + position.currentLine + ' com chave exposta.',
+						range: range,
+						severity: vscode.DiagnosticSeverity.Warning,
+						source: '',
+					});
+				}
+			}
+		});
 
 		for (let position of positions) {
-			if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password')) {
+			if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password') || position.parametro.includes('access_key')) {
 				if (!position.line.includes('secret')){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
-						message: position.parametro + ' com chave exposta.',
+						message: position.parametro + ' = ' + position.line + ' com chave exposta.',
 						range: range,
 						severity: vscode.DiagnosticSeverity.Warning,
 						source: '',
@@ -559,12 +595,12 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 	    positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.parametro.includes('memory') && !position.parametro.includes('reservation') ) {
+			if (position.parametro.includes('memory') && !position.parametro.includes('reservation') && !position.parametro.includes('threshold')) {
 				if (parseInt(position.line.replace('"','').replace('"','')) > 2048){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
-						message: position.parametro + ' superior a 1024, favor reduzir.',
+						message: position.parametro + ' superior a 2gb, favor reduzir.',
 						range: range,
 						severity: vscode.DiagnosticSeverity.Error,
 						source: '',
@@ -578,12 +614,12 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 	    positions  = findText(textToFind, directoryPath);
 
 		for (let position of positions) {
-			if (position.parametro.includes('cpu') && !position.parametro.includes('reservation') ) {
+			if (position.parametro.includes('cpu') && !position.parametro.includes('reservation') && !position.parametro.includes('threshold')) {
 				if (parseInt(position.line.replace('"','').replace('"','')) > 1024){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
-						message: position.parametro + ' superior a 1024, favor reduzir.',
+						message: position.parametro + ' superior a 1vcpu, favor reduzir.',
 						range: range,
 						severity: vscode.DiagnosticSeverity.Error,
 						source: '',
@@ -598,7 +634,7 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 
 		for (let position of positions) {
 			if (position.parametro.includes('capacity')) {
-				if (!position.line.includes('spot')){
+				if (!position.line.includes('spot') && !position.line.includes('[')){
 					const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
 					diagnostics.push({
 						code: '',
@@ -819,40 +855,86 @@ function findText(text: string[], filePath: string) {
 
 	const results: { filePath: string; position: vscode.Position; line: string; name: any; parametro: string; }[] = [];
 	
-	function searchInFile(filePath: string)
-	{
-		const fileContent = fs.readFileSync (filePath, 'utf-8'); 
+	function searchInFile(filePath: string) {
+		const fileContent = fs.readFileSync(filePath, 'utf-8');
 		const lines = fileContent.split('\n');
+	
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
+			let line = lines[i];
+			const commentIndex = line.indexOf('#');
+	
+			// Ignore parts of the line after the first # character
+			if (commentIndex !== -1) {
+				line = line.substring(0, commentIndex);
+			}
+	
 			for (let j = 0; j < text.length; j++) {
 				const name = text[j].toLowerCase();
-				const lineLower = line.toLowerCase(); 
+				const lineLower = line.toLowerCase();
 				const column = lineLower.indexOf(name);
+	
 				if (column !== -1) {
-					const position = new vscode.Position(i, column); 
+					const position = new vscode.Position(i, column);
 					if (filePath.includes('.tfvars')) {
-						const parametro = line.substring(0, line.indexOf('=')).replace('"','').trim().replace('"','').toLowerCase();
+						const parametro = line.substring(0, line.indexOf('=')).replace(/"/g, '').trim().toLowerCase();
 						let valor = line.substring(line.indexOf('=') + 1).trim();
-						if (parametro.trim().startsWith('#') || parametro.trim().startsWith('//')) {
-							break;
-						} else {
+						if (!parametro.trim().startsWith('#') && !parametro.trim().startsWith('//')) {
 							if (valor.includes('##')) {
 								valor = valor.substring(0, valor.indexOf('##')).trim();
 							}
-							results.push({filePath, position, line: valor.toLowerCase(), name, parametro});
+							results.push({ filePath, position, line: valor.toLowerCase(), name, parametro });
 						}
 					} else {
-						const parametro = line.substring(0, line.indexOf(':')).replace('"','').trim().replace('"','').toLowerCase();
-						const valor = line.substring(line.indexOf(':') + 1).trim().replace(',','');
-						results.push({filePath, position, line: valor.toLowerCase(), name, parametro});
+						const parametro = line.substring(0, line.indexOf(':')).replace(/"/g, '').trim().toLowerCase();
+						const valor = line.substring(line.indexOf(':') + 1).trim().replace(',', '');
+						results.push({ filePath, position, line: valor.toLowerCase(), name, parametro });
 					}
 				}
 			}
 		}
 	}
+	
 	searchInFile(filePath);
 	return results;
+	
+	searchInFile(filePath);
+	return results;
+}
+
+function findTextWithNextLine(text: string[], filePath: string) {
+    const results: { filePath: string; position: vscode.Position; currentLine: string; nextLine: string; name: string; parametro: string; }[] = [];
+
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContent.split('\n');
+
+    lines.forEach((line, i) => {
+        text.forEach(name => {
+            const lineLower = line.toLowerCase();
+            const column = lineLower.indexOf(name);
+
+            if (column !== -1) {
+                const position = new vscode.Position(i, column);
+                const nextLine = lines[i + 1] ? lines[i + 1].toLowerCase() : '';
+
+                if (filePath.includes('.tfvars')) {
+                    const parametro = line.substring(0, line.indexOf('=')).replace(/"/g, '').trim().toLowerCase();
+                    let valor = line.substring(line.indexOf('=') + 1).trim();
+                    if (!parametro.trim().startsWith('#') && !parametro.trim().startsWith('//')) {
+                        if (valor.includes('##')) {
+                            valor = valor.substring(0, valor.indexOf('##')).trim();
+                        }
+                        results.push({ filePath, position, currentLine: valor.toLowerCase(), nextLine, name, parametro });
+                    }
+                } else {
+                    const parametro = line.substring(0, line.indexOf(':')).replace(/"/g, '').trim().toLowerCase();
+                    const valor = line.substring(line.indexOf(':') + 1).trim().replace(',', '');
+                    results.push({ filePath, position, currentLine: valor.toLowerCase(), nextLine, name, parametro });
+                }
+            }
+        });
+    });
+
+    return results;
 }
 
 function findTextDocker(text: string[], filePath: string) {
