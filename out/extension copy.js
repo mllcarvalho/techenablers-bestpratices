@@ -6,52 +6,26 @@ const path = require("path");
 const fs = require("fs");
 async function activate(context) {
     const collection = vscode.languages.createDiagnosticCollection('techenablers-bestpratices');
-    //PROD
     let urlTf = await vscode.workspace.findFiles('**/infra/terraform/inventories/prod/**');
     let urlCf1 = await vscode.workspace.findFiles('**/infra/prod/**');
     let urlCf2 = await vscode.workspace.findFiles('**/infra/parameters-prod.json');
-    //DEV
-    let urlTfDev = await vscode.workspace.findFiles('**/infra/terraform/inventories/dev/**');
-    let urlCf1Dev = await vscode.workspace.findFiles('**/infra/dev/**');
-    let urlCf2Dev = await vscode.workspace.findFiles('**/infra/parameters-dev.json');
-    //HOM
-    let urlTfHom = await vscode.workspace.findFiles('**/infra/terraform/inventories/hom/**');
-    let urlCf1Hom = await vscode.workspace.findFiles('**/infra/hom/**');
-    let urlCf2Hom = await vscode.workspace.findFiles('**/infra/parameters-hom.json');
     let urlDocker = await vscode.workspace.findFiles('**/app/Dockerfile');
     let urlPipes = await vscode.workspace.findFiles('**/.iupipes.yml');
-    let listUrlsProd = [];
-    let listUrlsDevHom = [];
-    listUrlsProd.push(urlTf, urlCf1, urlCf2, urlDocker, urlPipes);
-    listUrlsDevHom.push(urlTfDev, urlCf1Dev, urlCf2Dev, urlTfHom, urlCf1Hom, urlCf2Hom);
-    for (let urllist of listUrlsProd) {
+    let listUrls = [];
+    listUrls.push(urlTf, urlCf1, urlCf2, urlDocker, urlPipes);
+    for (let urllist of listUrls) {
         for (let urlDetails of urllist) {
             updateDiagnostics(urlDetails, collection, urlPipes);
         }
     }
-    for (let urllist of listUrlsDevHom) {
-        for (let urlDetails of urllist) {
-            updateDiagnosticsDevHom(urlDetails, collection);
-        }
-    }
     context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
         if (editor) {
-            if (editor.uri.fsPath.includes('prod')) {
-                updateDiagnostics(editor.uri, collection, urlPipes);
-            }
-            else if (editor.uri.fsPath.includes('dev') || editor.uri.fsPath.includes('hom')) {
-                updateDiagnosticsDevHom(editor.uri, collection);
-            }
+            updateDiagnostics(editor.uri, collection, urlPipes);
         }
     }));
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
         if (editor) {
-            if (editor.document.uri.fsPath.includes('prod')) {
-                updateDiagnostics(editor.document.uri, collection, urlPipes);
-            }
-            else if (editor.document.uri.fsPath.includes('dev') || editor.document.uri.fsPath.includes('hom')) {
-                updateDiagnosticsDevHom(editor.document.uri, collection);
-            }
+            updateDiagnostics(editor.document.uri, collection, urlPipes);
         }
     }));
 }
@@ -111,7 +85,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                     code: '',
                     message: position.parametro + ' inferior a 3.',
                     range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
+                    severity: vscode.DiagnosticSeverity.Warning,
                     source: '',
                 });
             }
@@ -182,7 +156,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                             code: '',
                             message: 'Configuracão com menos de 3 subnets.',
                             range: range,
-                            severity: vscode.DiagnosticSeverity.Error,
+                            severity: vscode.DiagnosticSeverity.Warning,
                             source: '',
                         });
                     }
@@ -200,7 +174,7 @@ function updateDiagnostics(document, collection, iupipesFile) {
                         code: '',
                         message: 'Configuracão com menos de 3 subnets.',
                         range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
+                        severity: vscode.DiagnosticSeverity.Warning,
                         source: '',
                     });
                 }
@@ -378,330 +352,6 @@ function updateDiagnostics(document, collection, iupipesFile) {
     }
     collection.set(document, diagnostics);
 }
-function updateDiagnosticsDevHom(document, collection) {
-    let pathFound = path.basename(document.fsPath).toLowerCase();
-    let pathsToSearchEnvironments = ['terraform.tfvars', 'parameters-dev.json', 'parameters-hom.json', 'parameters.json'];
-    let positions = [];
-    let textToFind = [];
-    const diagnostics = [];
-    if (document && pathsToSearchEnvironments.includes(pathFound) && (document.fsPath.toLowerCase().includes('dev') || document.fsPath.toLowerCase().includes('hom'))) {
-        let directoryPath = document.fsPath;
-        //VARIAVEIS DE AMBIENTE
-        textToFind = ['prod'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.line.includes('prod')) {
-                const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                diagnostics.push({
-                    code: '',
-                    message: position.parametro + ' apontando para ' + position.name,
-                    range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-        }
-        //PARAMETRIZACAO
-        textToFind = ['retention', 'desired', 'min', 'max'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            //RETENTION
-            if (position.parametro.includes('retention') && parseInt(position.line.replace(':', '')) > 1) {
-                const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                diagnostics.push({
-                    code: '',
-                    message: position.parametro + ' superior a 1 dia',
-                    range: range,
-                    severity: vscode.DiagnosticSeverity.Warning,
-                    source: '',
-                });
-            }
-            //DESIRED E MIN
-            if ((position.parametro.includes('desired') || position.parametro.includes('min') || position.parametro.includes('minimum')) && (position.parametro.includes('task') || position.parametro.includes('capacity') || position.parametro.includes('count')) && parseInt(position.line.replace('"', '')) > 1) {
-                const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                diagnostics.push({
-                    code: '',
-                    message: position.parametro + ' superior a 1.',
-                    range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-            //MAX
-            if ((position.parametro.includes('max') || position.parametro.includes('maximum')) && (position.parametro.includes('task') || position.parametro.includes('capacity') || position.parametro.includes('count')) && parseInt(position.line.replace('"', '')) > 3) {
-                const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                diagnostics.push({
-                    code: '',
-                    message: position.parametro + ' superior a 3.',
-                    range: range,
-                    severity: vscode.DiagnosticSeverity.Warning,
-                    source: '',
-                });
-            }
-        }
-        //ESPAÇOS EM BRANCO 
-        textToFind = ['subnet'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('subnet')) {
-                let lines = position.line.split(',');
-                for (let line of lines) {
-                    line = line.replace('[', '').replace(']', '').trim();
-                    if (line.includes(' ')) {
-                        const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                        diagnostics.push({
-                            code: '',
-                            message: position.parametro + ' com espaçamentos.',
-                            range: range,
-                            severity: vscode.DiagnosticSeverity.Error,
-                            source: '',
-                        });
-                    }
-                }
-            }
-        }
-        textToFind = ['vpc'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('vpc') && position.line.includes(' ')) {
-                const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                diagnostics.push({
-                    code: '',
-                    message: position.parametro + ' com espaçamentos.',
-                    range: range,
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-        }
-        //KEY EXPOSTAS
-        textToFind = ['token', 'accesskey', 'password'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('token') || position.parametro.includes('accesskey') || position.parametro.includes('password')) {
-                if (!position.line.includes('secret')) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' com chave exposta.',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Warning,
-                        source: '',
-                    });
-                }
-            }
-        }
-        //MEMORIA
-        textToFind = ['memory'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('memory') && !position.parametro.includes('reservation')) {
-                if (parseInt(position.line.replace('"', '').replace('"', '')) > 2048) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' superior a 1024, favor reduzir.',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
-                        source: '',
-                    });
-                }
-            }
-        }
-        //CPU
-        textToFind = ['cpu'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('cpu') && !position.parametro.includes('reservation')) {
-                if (parseInt(position.line.replace('"', '').replace('"', '')) > 1024) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' superior a 1024, favor reduzir.',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
-                        source: '',
-                    });
-                }
-            }
-        }
-        //CAPACITY PROVIDER
-        textToFind = ['provider'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('capacity')) {
-                if (!position.line.includes('spot')) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' não utilizando SPOT.',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
-                        source: '',
-                    });
-                }
-            }
-        }
-        //INSTANCE_TYPE EC2
-        textToFind = ['instance'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('type')) {
-                if (position.line.includes('large')) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' superdimensionada. Favor verificar',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Warning,
-                        source: '',
-                    });
-                }
-                if (!position.line.includes('t4g')) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' não utilizando instancias ARM (t4g).',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
-                        source: '',
-                    });
-                }
-            }
-        }
-        if (positions.length != 0) {
-            //ENVIRONMENT DEV E HOM
-            textToFind = ['spot'];
-            positions = findText(textToFind, directoryPath);
-            if (positions.length == 0) {
-                diagnostics.push({
-                    code: '',
-                    message: 'Instâncias não configuradas como SPOT',
-                    range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-        }
-        //RDS 
-        textToFind = ['database'];
-        positions = findText(textToFind, directoryPath);
-        if (positions.length != 0) {
-            textToFind = ['instance'];
-            positions = findText(textToFind, directoryPath);
-            for (let position of positions) {
-                if (position.parametro.includes('class')) {
-                    if (!position.line.includes('t4g')) {
-                        const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                        diagnostics.push({
-                            code: '',
-                            message: position.parametro + ' não utilizando instancias ARM (t4g).',
-                            range: range,
-                            severity: vscode.DiagnosticSeverity.Error,
-                            source: '',
-                        });
-                    }
-                }
-            }
-            textToFind = ['reader'];
-            positions = findText(textToFind, directoryPath);
-            for (let position of positions) {
-                if (position.parametro.includes('count')) {
-                    if (parseInt(position.line.replace('"', '').replace('"', '')) > 0) {
-                        const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                        diagnostics.push({
-                            code: '',
-                            message: position.parametro + ' utilizando replicas de leitura.',
-                            range: range,
-                            severity: vscode.DiagnosticSeverity.Error,
-                            source: '',
-                        });
-                    }
-                }
-            }
-        }
-        //DYNAMO 
-        textToFind = ['billing_mode'];
-        positions = findText(textToFind, directoryPath);
-        for (let position of positions) {
-            if (position.parametro.includes('billing_mode')) {
-                if (!position.line.includes('pay_per_request')) {
-                    const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                    diagnostics.push({
-                        code: '',
-                        message: position.parametro + ' não utilizando PAY_PER_REQUEST.',
-                        range: range,
-                        severity: vscode.DiagnosticSeverity.Error,
-                        source: '',
-                    });
-                }
-            }
-        }
-        //API GATEWAY 
-        textToFind = ['api_gateway'];
-        positions = findText(textToFind, directoryPath);
-        if (positions.length != 0) {
-            textToFind = ['logging_level'];
-            positions = findText(textToFind, directoryPath);
-            if (positions.length == 0) {
-                diagnostics.push({
-                    code: '',
-                    message: 'Logging Level não configurado. (INFO por padrão)',
-                    range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-            else {
-                for (let position of positions) {
-                    if (position.parametro.includes('logging_level')) {
-                        if (!position.line.includes('off')) {
-                            const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                            diagnostics.push({
-                                code: '',
-                                message: position.parametro + ' ativado no ambiente.',
-                                range: range,
-                                severity: vscode.DiagnosticSeverity.Error,
-                                source: '',
-                            });
-                        }
-                    }
-                }
-            }
-            textToFind = ['x_ray'];
-            positions = findText(textToFind, directoryPath);
-            if (positions.length == 0) {
-                diagnostics.push({
-                    code: '',
-                    message: 'X-Ray não configurado. (Ativado por padrão)',
-                    range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
-            }
-            else {
-                for (let position of positions) {
-                    if (position.parametro.includes('x_ray')) {
-                        if (position.line.includes('true')) {
-                            const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
-                            diagnostics.push({
-                                code: '',
-                                message: position.parametro + ' ativado no ambiente.',
-                                range: range,
-                                severity: vscode.DiagnosticSeverity.Error,
-                                source: '',
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else {
-        collection.clear();
-    }
-    collection.set(document, diagnostics);
-}
 function getEnvironmentAccount(filePath) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const lines = fileContent.split('\n');
@@ -810,4 +460,4 @@ function findEcsTemplate(filePath) {
         return false;
     }
 }
-//# sourceMappingURL=extension.js.map
+//# sourceMappingURL=extension%20copy.js.map
