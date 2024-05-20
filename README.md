@@ -50,6 +50,8 @@ A função `activate` é chamada quando a extensão é ativada. Ela configura a 
 
 A extensão monitora a salvamento e a mudança de arquivos no editor ativo. Ao salvar ou mudar para um arquivo específico, ela verifica se o arquivo corresponde aos padrões de regex definidos e aplica os diagnósticos apropriados.
 
+![Multi Diagnostics](./resources/imgreadme.png)
+
 ## 🌟 Contribuindo
 
 Para contribuir com o desenvolvimento deste plugin, siga as etapas abaixo:
@@ -69,4 +71,4 @@ Por favor, certifique-se de que seu código segue as melhores práticas de codif
 
 Esta documentação fornece uma visão geral do funcionamento do plugin e das regras implementadas para garantir a qualidade dos arquivos de configuração de infraestrutura e código. Siga as orientações para contribuir e ajude a melhorar esta extensão.
 
-![Multi Diagnostics](./resources/imgreadme.png)
+
