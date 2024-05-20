@@ -3,7 +3,7 @@
 	"displayName": "TechEnablers@Itau",
 	"description": "TechEnablers@Itau",
 	"icon": "resources/spellIcon.png",
-	"version": "0.27.0",
+	"version": "0.28.0",
 	"publisher": "techenablers-itau",
 	"private": true,
 	"license": "MIT",
