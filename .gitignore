@@ -14,8 +14,7 @@ yarn-error.log*
 Thumbs.db
 
 # TypeScript
-*.tsbuildinfo
-
+*.tsbuildinfo 
 # VSCode
 .vscode/
 *.vsix
