@@ -1,16 +1,17 @@
-name: Publish Extension
+name: Publish VSCode Extension
 
 on:
   push:
-    branches:
-      - main  # Você pode mudar isso para a branch que desejar
+    tags:
+      - 'v*.*.*'  # Executa o workflow para tags que seguem o formato v0.0.0
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -20,24 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Compile
-        run: npm run compile
+      - name: Extract tag version
+        id: extract_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: Install vsce
-        run: npm install -g @vscode/vsce
-
-      - name: Git config
-        run: | 
-          git config --global user.email 'mllcarvalho.it@gmail.com'
-          git config --global user.name 'mllcarvalho'
-
-      - name: Ensure clean working directory
-        run: git status
-
-      - name: Patch version
-        run: npm version patch --force
-
-      - name: Publish to VS Code Marketplace
+      - name: Publish VSCode Extension
+        run: npx vsce publish ${{ env.VERSION }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish minor
+
+      - name: Clean up node_modules
+        run: rm -rf node_modules
