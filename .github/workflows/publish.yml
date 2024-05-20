@@ -21,6 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Git config
+        run: | 
+          git config --global user.email 'mllcarvalho.it@gmail.com'
+          git config --global user.name 'mllcarvalho'
+
+
       - name: Extract tag version
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
