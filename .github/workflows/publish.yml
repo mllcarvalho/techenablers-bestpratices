@@ -1,32 +1,70 @@
 name: Publish Extension
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Branch or Tag ref'
-        required: true
+  push:
+    tags:
+      - '*'  # O workflow será acionado em qualquer tag criada
 
 jobs:
-  publish:
-    name: Publish to VSCode Marketplace
+  build:
+    name: Build and Approve
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.inputs.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Download Artifact
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true  # Permite continuar mesmo se o ESLint falhar
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Package Extension
+        run: |
+          npm install -g @vscode/vsce
+          vsce package
+
+      - name: Upload Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: vsce-package
+          path: "*.vsix"
+
+  manual-approval:
+    name: Manual Approval
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Wait for approval
+        uses: flyrev/approval-action@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to VSCode Marketplace
+    runs-on: ubuntu-latest
+    needs: manual-approval
+
+    steps:
+      - name: Download Package
         uses: actions/download-artifact@v3
         with:
           name: vsce-package
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
       - name: Install vsce
         run: npm install -g @vscode/vsce
