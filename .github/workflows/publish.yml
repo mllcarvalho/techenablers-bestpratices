@@ -34,7 +34,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: Publish VSCode Extension
-        run: npx vsce publish
+        run: npx vsce publish minor
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
