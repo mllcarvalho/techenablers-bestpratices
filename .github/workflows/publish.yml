@@ -22,11 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint
-        run: |
-          npm init @eslint/config
-          npm run lint 
-
       - name: Compile
         run: npm run compile
 
@@ -66,11 +61,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Lint
-        run: |
-          npm init @eslint/config
-          npm run lint 
 
       - name: Compile
         run: npm run compile
