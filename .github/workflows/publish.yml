@@ -30,27 +30,29 @@ jobs:
           npm install -g @vscode/vsce
           vsce package
 
-      - name: Create Release Approval
-        uses: fjogeleit/http-request-action@v1.8.0
-        id: approval
+      - name: Request Approval
+        uses: actions/github-script@v6
         with:
-          url: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}/approve
-          method: POST
-          headers: '{ "Accept": "application/vnd.github.v3+json", "Authorization": "token ${{ secrets.GITHUB_TOKEN }}" }'
-          body: '{"event_type": "manual_approval", "client_payload": {}}'
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'publish.yml',
+              ref: context.ref,
+              inputs: {
+                approve: 'true'
+              }
+            })
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     name: Publish to VSCode Marketplace
     runs-on: ubuntu-latest
     needs: build-and-approve
-    steps:
-      - name: Wait for Approval
-        uses: chetan/invoke-action@v2
-        with:
-          workflow: 'Publish Extension'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: approval
+    if: ${{ github.event.inputs.approve == 'true' }}
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
