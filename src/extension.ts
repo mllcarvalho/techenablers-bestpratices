@@ -49,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(editor => {
 		if (editor) {
-			if(prodRegex.test(editor.uri.fsPath)) {
+			if(prodRegex.test(editor.uri.fsPath) || editor.uri.fsPath.includes('Dockerfile') || editor.uri.fsPath.includes('.iupipes.yml')) {
 				updateDiagnostics(editor.uri, collection, urlPipes);
 			} else if (devHomRegex.test(editor.uri.fsPath)) {
 				updateDiagnosticsDevHom(editor.uri, collection);
@@ -60,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
 		if (editor) {
-			if(prodRegex.test(editor.document.uri.fsPath)) {
+			if(prodRegex.test(editor.document.uri.fsPath) || editor.document.uri.fsPath.includes('Dockerfile') || editor.document.uri.fsPath.includes('.iupipes.yml')) {
 				updateDiagnostics(editor.document.uri, collection, urlPipes);
 			} else if (devHomRegex.test(editor.document.uri.fsPath)) {
 				updateDiagnosticsDevHom(editor.document.uri, collection);
