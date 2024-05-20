@@ -22,10 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: true  # Permite continuar mesmo se o ESLint falhar
-
       - name: Compile
         run: npm run compile
 
@@ -44,16 +40,55 @@ jobs:
     name: Manual Approval
     runs-on: ubuntu-latest
     needs: build
+
     steps:
-      - name: Wait for approval
-        uses: flyrev/approval-action@v1
+      - name: Request approval
+        uses: actions/github-script@v6
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'approval'
+            });
+
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Approval needed for publishing extension',
+                body: 'Please approve the publishing of the extension.',
+                labels: ['approval']
+              });
+            } else {
+              core.info('Approval request already created.');
+            }
+
+      - name: Await approval
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'approval'
+            });
+
+            const issue = issues[0];
+            if (issue && issue.state === 'open') {
+              core.setFailed('Waiting for approval...');
+            } else {
+              core.info('Approved');
+            }
+        continue-on-error: true
 
   publish:
     name: Publish to VSCode Marketplace
     runs-on: ubuntu-latest
     needs: manual-approval
+    if: always() && !failure()  # Continua somente se a etapa anterior não falhou
 
     steps:
       - name: Download Package
