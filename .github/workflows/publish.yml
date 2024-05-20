@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: vsce-package
-          path: "*.vsix"
+          path: '*.vsix'
 
   manual-approval:
     name: Manual Approval
@@ -91,6 +91,9 @@ jobs:
     if: always() && !failure()  # Continua somente se a etapa anterior não falhou
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Download Package
         uses: actions/download-artifact@v3
         with:
