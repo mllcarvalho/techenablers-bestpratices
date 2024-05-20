@@ -1,14 +1,9 @@
 name: Publish VSCode Extension
 
-# on:
-#   push:
-#     tags:
-#       - 'v*.*.*'  # Executa o workflow para tags que seguem o formato v0.0.0
-
 on:
   push:
-    branches:
-      - develop
+    tags:
+      - 'v*.*.*'  # Executa o workflow para tags que seguem o formato v0.0.0
 
 jobs:
   publish:
@@ -39,8 +34,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: Publish VSCode Extension
-        # run: npx vsce publish ${{ env.VERSION }}
-        run: npx vsce publish 0.32.0
+        run: npx vsce publish ${{ env.VERSION }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
