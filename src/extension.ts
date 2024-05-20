@@ -737,6 +737,24 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 					}
 				}
 			}
+
+			textToFind = ['multi_az']
+			positions  = findText(textToFind, directoryPath);
+
+			for (let position of positions) {
+				if (position.parametro.includes('multi_az')) {
+					if (position.line.includes('true')){
+						const range = new vscode.Range(position.position, position.position.translate(0, position.filePath.length));
+						diagnostics.push({
+							code: '',
+							message: position.parametro + ' utilizando multi AZ.',
+							range: range,
+							severity: vscode.DiagnosticSeverity.Error,
+							source: '',
+						});
+					}
+				}
+			}
 		}
 
 		//DYNAMO 
