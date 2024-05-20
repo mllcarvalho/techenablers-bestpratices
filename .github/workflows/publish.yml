@@ -1,0 +1,82 @@
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - '*'  # O workflow será acionado em qualquer tag criada
+
+jobs:
+  build-and-approve:
+    name: Build and Approve
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'  # Ou a versão do Node.js que você usa
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint  # Opcional, se você tem um script de lint
+
+      - name: Build
+        run: npm run build  # Opcional, se você tem um script de build
+
+      - name: Package Extension
+        run: |
+          npm install -g @vscode/vsce
+          vsce package
+
+      - name: Create Release Approval
+        uses: fjogeleit/http-request-action@v1.8.0
+        id: approval
+        with:
+          url: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}/approve
+          method: POST
+          headers: '{ "Accept": "application/vnd.github.v3+json", "Authorization": "token ${{ secrets.GITHUB_TOKEN }}" }'
+          body: '{"event_type": "manual_approval", "client_payload": {}}'
+
+  publish:
+    name: Publish to VSCode Marketplace
+    runs-on: ubuntu-latest
+    needs: build-and-approve
+    steps:
+      - name: Wait for Approval
+        uses: chetan/invoke-action@v2
+        with:
+          workflow: 'Publish Extension'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: approval
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'  # Ou a versão do Node.js que você usa
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint  # Opcional, se você tem um script de lint
+
+      - name: Build
+        run: npm run build  # Opcional, se você tem um script de build
+
+      - name: Package Extension
+        run: |
+          npm install -g @vscode/vsce
+          vsce package
+
+      - name: Publish Extension
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: vsce publish
