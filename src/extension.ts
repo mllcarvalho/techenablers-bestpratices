@@ -19,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let urlTfDev  = await vscode.workspace.findFiles('**/infra/terraform/inventories/dev/**'); 
 	let urlCf1Dev = await vscode.workspace.findFiles('**/infra/dev/**');
 	let urlCf2Dev = await vscode.workspace.findFiles('**/infra/parameters-dev.json');
-
+ 
 	//HOM
 	let urlTfHom  = await vscode.workspace.findFiles('**/infra/terraform/inventories/hom/**'); 
 	let urlCf1Hom = await vscode.workspace.findFiles('**/infra/hom/**');
@@ -54,7 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			} else if (devHomRegex.test(editor.uri.fsPath)) {
 				updateDiagnosticsDevHom(editor.uri, collection);
 			}
-				
+				 
 		}
 	}));
 
@@ -682,22 +682,18 @@ function updateDiagnosticsDevHom(document: vscode.Uri, collection: vscode.Diagno
 						source: '',
 					});
 				}
-			}
-		}
+				textToFind = ['spot'];
+				positions  = findText(textToFind, directoryPath);
 
-		if (positions.length != 0) {
-			//ENVIRONMENT DEV E HOM
-			textToFind = ['spot', 'database'];
-			positions  = findText(textToFind, directoryPath);
-
-			if (positions.length == 0) {
-				diagnostics.push({
-					code: '',
-					message: 'Instâncias não configuradas como SPOT',
-					range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-					severity: vscode.DiagnosticSeverity.Error,
-					source: '',
-				});
+				if (positions.length == 0) {
+					diagnostics.push({
+						code: '',
+						message: 'Instâncias não configuradas como SPOT',
+						range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+						severity: vscode.DiagnosticSeverity.Error,
+						source: '',
+					});
+				}
 			}
 		}
 
@@ -902,9 +898,6 @@ function findText(text: string[], filePath: string) {
 			}
 		}
 	}
-	
-	searchInFile(filePath);
-	return results;
 	
 	searchInFile(filePath);
 	return results;

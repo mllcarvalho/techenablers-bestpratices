@@ -605,20 +605,17 @@ function updateDiagnosticsDevHom(document, collection) {
                         source: '',
                     });
                 }
-            }
-        }
-        if (positions.length != 0) {
-            //ENVIRONMENT DEV E HOM
-            textToFind = ['spot', 'database'];
-            positions = findText(textToFind, directoryPath);
-            if (positions.length == 0) {
-                diagnostics.push({
-                    code: '',
-                    message: 'Instâncias não configuradas como SPOT',
-                    range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
-                    severity: vscode.DiagnosticSeverity.Error,
-                    source: '',
-                });
+                textToFind = ['spot'];
+                positions = findText(textToFind, directoryPath);
+                if (positions.length == 0) {
+                    diagnostics.push({
+                        code: '',
+                        message: 'Instâncias não configuradas como SPOT',
+                        range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+                        severity: vscode.DiagnosticSeverity.Error,
+                        source: '',
+                    });
+                }
             }
         }
         //RDS 
@@ -802,8 +799,6 @@ function findText(text, filePath) {
             }
         }
     }
-    searchInFile(filePath);
-    return results;
     searchInFile(filePath);
     return results;
 }
