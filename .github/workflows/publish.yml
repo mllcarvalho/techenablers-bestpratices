@@ -1,9 +1,14 @@
 name: Publish VSCode Extension
 
+# on:
+#   push:
+#     tags:
+#       - 'v*.*.*'  # Executa o workflow para tags que seguem o formato v0.0.0
+
 on:
   push:
-    tags:
-      - 'v*.*.*'  # Executa o workflow para tags que seguem o formato v0.0.0
+    branches:
+      - develop
 
 jobs:
   publish:
