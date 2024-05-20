@@ -2,12 +2,11 @@ name: Publish Extension
 
 on:
   push:
-    tags:
-      - '*'  # O workflow será acionado em qualquer tag criada
+    branches:
+      - main  # Você pode mudar isso para a branch que desejar
 
 jobs:
-  build:
-    name: Build and Approve
+  build-and-publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,89 +24,10 @@ jobs:
       - name: Compile
         run: npm run compile
 
-      - name: Package Extension
-        run: |
-          npm install -g @vscode/vsce
-          vsce package
-
-      - name: Upload Package
-        uses: actions/upload-artifact@v3
-        with:
-          name: vsce-package
-          path: '*.vsix'
-
-  manual-approval:
-    name: Manual Approval
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Request approval
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'approval'
-            });
-
-            if (issues.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: 'Approval needed for publishing extension',
-                body: 'Please approve the publishing of the extension.',
-                labels: ['approval']
-              });
-            } else {
-              core.info('Approval request already created.');
-            }
-
-      - name: Await approval
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'approval'
-            });
-
-            const issue = issues[0];
-            if (issue && issue.state === 'open') {
-              core.setFailed('Waiting for approval...');
-            } else {
-              core.info('Approved');
-            }
-        continue-on-error: true
-
-  publish:
-    name: Publish to VSCode Marketplace
-    runs-on: ubuntu-latest
-    needs: manual-approval
-    if: always() && !failure()  # Continua somente se a etapa anterior não falhou
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Download Package
-        uses: actions/download-artifact@v3
-        with:
-          name: vsce-package
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
-      - name: Publish Extension
+      - name: Publish to VS Code Marketplace
         env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: vsce publish *.vsix
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+        run: vsce publish
