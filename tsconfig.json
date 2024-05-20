@@ -11,6 +11,5 @@
 	"exclude": [
 		"node_modules",
 		".vscode-test"
-	],
-	"types": ["node"]
+	]
 }
