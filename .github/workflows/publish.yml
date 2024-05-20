@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,6 +25,9 @@ jobs:
 
       - name: Install vsce
         run: npm install -g @vscode/vsce
+
+      - name: Patch version
+        run: npm version patch --force
 
       - name: Publish to VS Code Marketplace
         env:
